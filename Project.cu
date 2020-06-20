@@ -1,17 +1,3 @@
-//TODO dynamic parallelism kullanamadik kernel icinde kernel. cok kasti. cudaMalloc vs dinamik size'da yapamadik kernel icinde.
-//TODO texture cok vaktimizi aldi. (2 gün totalde) globalden texRef alan yontem imaj piramidinin bazi levellarinda calismadi,
-//TODO benchmark using 2 kernels of histogram finding, and 1 merged kernel.
-//TODO findMedian kernel'ini de gom ustteki merge haline.
-//TODO write'ler olmadan, readler dahil 1080 -> 593.515ms. gtx850m -> 1638.57 ms.
-//TODO preprocessing kisminda img_count tane stream actik, her mtb ebm find kernel'i kendi streaminde. memcpyAsync. gtx850m->1495.27 ms oldu.
-//TODO asil algoritmanin kostugu kismi da her imajin kendi stream'ine koyduk. ama calculateOffsetError if checki sequential hala. simdi multithreaded ekleyecegiz.
-//TODO asil algoritmaya multithread ekledik (image_count tane thread her foto 1 cekirdekte isleniyor) ve -O3 optimizasyon actik (compiler flag), gtx850m -> 1079.43 ms
-//TODO Release modda cesitli compiler optimizasyonlari eklendi:
-//TODO 4k -> (4032x2268) ve 2k -> 1536x2048 dikey.
-//TODO ustteki satir icin: gtx850m -> 343.15 ms (2k fotolar 5 tane), 933.248 ms (4k fotolar, 5 tane).
-//TODO aynisini CPU (fully optimized -O3 var, ama single threaded)-> 1237.07ms (2k fotolar 5 tane) 3885.8ms (4k fotolar 5 tane)
-//TODO CPU multithread yazdik alignment algo. kismina, aksine yavaslatti 4011.04 ms oldu 4k 5 foto. 1401.87 ms 2k 5 foto. (gtx850m)
-
 #include <iostream>
 #include <vector>
 #include <pthread.h>
@@ -105,12 +91,8 @@ void *calculateOffset(void *args)
 				cudaMalloc((void **)&xor_result,
 						   tmpNImageSize * sizeof(uint8_t));
 
-				uint8_t *after_first_and;
-				cudaMalloc((void **)&after_first_and,
-						   tmpNImageSize * sizeof(uint8_t));
-
-				uint8_t *after_second_and;
-				cudaMalloc((void **)&after_second_and,
+				uint8_t *after_ands;
+				cudaMalloc((void **)&after_ands,
 						   tmpNImageSize * sizeof(uint8_t));
 
 				int *err;
@@ -119,11 +101,10 @@ void *calculateOffset(void *args)
 
 				shift_Image<<<dimGrid, dimBlock, 0, stream>>>(
 					shifted_mtb[second_index * PYRAMID_LEVEL + k],
-					mtb[second_index * PYRAMID_LEVEL + k], tmpWidth,
-					tmpHeight, xs, ys, j_x, i_y, j_width, i_height);
-				shift_Image<<<dimGrid, dimBlock, 0, stream>>>(
 					shifted_ebm[second_index * PYRAMID_LEVEL + k],
-					ebm[second_index * PYRAMID_LEVEL + k], tmpWidth,
+					mtb[second_index * PYRAMID_LEVEL + k],
+					ebm[second_index * PYRAMID_LEVEL + k],
+					tmpWidth,
 					tmpHeight, xs, ys, j_x, i_y, j_width, i_height);
 
 				dimBlock = dim3(THREAD_COUNT, THREAD_COUNT);
@@ -135,15 +116,12 @@ void *calculateOffset(void *args)
 													  shifted_mtb[second_index * PYRAMID_LEVEL + k], tmpWidth,
 													  tmpNImageSize);
 
-				AND<<<dimGrid, dimBlock, 0, stream>>>(after_first_and,
-													  ebm[first_index * PYRAMID_LEVEL + k], xor_result,
+				AND<<<dimGrid, dimBlock, 0, stream>>>(after_ands,
+													  ebm[first_index * PYRAMID_LEVEL + k], shifted_ebm[second_index * PYRAMID_LEVEL + k],
+													  xor_result,
 													  tmpWidth, tmpNImageSize);
 
-				AND<<<dimGrid, dimBlock, 0, stream>>>(after_second_and,
-													  shifted_ebm[second_index * PYRAMID_LEVEL + k],
-													  after_first_and, tmpWidth, tmpNImageSize);
-
-				count_Errors<<<32, 256, 0, stream>>>(after_second_and, err,
+				count_Errors<<<32, 256, 0, stream>>>(after_ands, err,
 													 tmpNImageSize);
 
 				cudaMemcpyAsync(&error, err, sizeof(int), cudaMemcpyDeviceToHost, stream); //CANNOT BE ASYNC, SYNC PLEASE
@@ -325,6 +303,12 @@ int main(int argc, char *argv[])
 			cudaMalloc((void **)&median, sizeof(int));
 			find_Median<<<1, 1, 0, streams[i]>>>(tmpNImageSize, hist, median);
 
+			// int *asd = (int *)malloc(
+			// 			sizeof(int) * 1);
+			// cudaMemcpy(asd, median,
+			// 				sizeof(int) * 1, cudaMemcpyDeviceToHost);
+			// cout<<"median: "<<*asd<<" ve n: "<<tmpNImageSize<<endl;
+
 			dimBlock = dim3(THREAD_COUNT, THREAD_COUNT);
 			dimGrid = dim3((tmpWidth + dimBlock.x - 1) / dimBlock.x,
 						   (tmpHeight + dimBlock.y - 1) / dimBlock.y);
@@ -336,7 +320,23 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	//cudaDeviceSynchronize(); //wait for all streams to finish up.
+	// cudaDeviceSynchronize(); //wait for all streams to finish up.
+
+	// char str[32];
+	// sprintf(str, "mtb.jpg");
+	// char path[80] = "./output/";
+	// strcat(path, str);
+
+	// uint8_t *tmpmtb = (uint8_t *)malloc(
+	// 	sizeof(uint8_t) * nImageSize/1);
+	// cudaMemcpy(tmpmtb, mtb[0],
+	// 			sizeof(uint8_t) * nImageSize/1, cudaMemcpyDeviceToHost);
+
+	// cudaDeviceSynchronize();
+
+	// stbi_write_jpg(path, width/1, height/1, 1, tmpmtb, width*3);
+
+	// return 0;
 
 	// for (int var = 0; var < img_count; ++var)
 	// {
@@ -423,7 +423,6 @@ int main(int argc, char *argv[])
 		int tmpHeight = height;
 		int tmpNImageSize = tmpWidth * tmpHeight;
 
-
 		//TODO bunu da bastn hallet
 		cudaMalloc((void **)&shifted_rgb_images[m], 3 * tmpNImageSize);
 		cudaMemset(shifted_rgb_images[m], 0,
@@ -478,7 +477,6 @@ int main(int argc, char *argv[])
 		int tmpHeight = height;
 		int tmpNImageSize = tmpWidth * tmpHeight;
 
-
 		//TODO bunu da bastn hallet
 		cudaMalloc((void **)&shifted_rgb_images[m], 3 * tmpNImageSize);
 		cudaMemset(shifted_rgb_images[m], 0,
@@ -527,7 +525,7 @@ int main(int argc, char *argv[])
 	cudaEventSynchronize(stop);
 	float milliseconds = 0;
 	cudaEventElapsedTime(&milliseconds, start, stop);
-	cout << "Time took: "<<milliseconds << " ms" << endl;
+	cout << "Time took: " << milliseconds << " ms" << endl;
 
 	//print original grayscale img
 	//	stbi_write_png(path, width, height, 3, rgb_images[mid_img_index], width*3);
@@ -545,7 +543,7 @@ int main(int argc, char *argv[])
 		}
 
 		char str[12];
-		sprintf(str, "%d%d%d.jpg", var+1,var+1,var+1);
+		sprintf(str, "%d%d%d.jpg", var + 1, var + 1, var + 1);
 		char path[80] = "./output/";
 		strcat(path, str);
 
@@ -557,7 +555,7 @@ int main(int argc, char *argv[])
 		stbi_write_jpg(path, tmpWidth, tmpHeight, 3, tmpmtb, tmpWidth * 3);
 	}
 	char str[12];
-	sprintf(str, "%d%d%d.jpg", mid_img_index+1,mid_img_index+1,mid_img_index+1);
+	sprintf(str, "%d%d%d.jpg", mid_img_index + 1, mid_img_index + 1, mid_img_index + 1);
 	char path[80] = "./output/";
 	strcat(path, str);
 

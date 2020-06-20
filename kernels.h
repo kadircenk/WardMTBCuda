@@ -49,7 +49,7 @@ typedef struct arg_struct
 
 // Simple transformation kernel
 __global__ void transform_kernel(float *output, cudaTextureObject_t texObj,
-								int width, int height)
+								 int width, int height)
 {
 
 	// Calculate normalized texture coordinates
@@ -74,10 +74,11 @@ __global__ void convert_to_grayscale(float *gray, uint8_t *img, int size, int wi
 	if (idx < size)
 	{
 		int index = idx * 3;
-		gray[idx] = (54 * img[index] + 183 * img[index + 1] + 19 * img[index + 2]) / 256.0f;
+		gray[idx] = (54 * img[index] + 183 * img[index + 1] + 19 * img[index + 2]) / 256.0f; //ward's paper
 	}
 }
 
+//histograms of different nonoverlapping parts of 1 image.
 __global__ void histogram_smem_atomics(const float *input, int *out, int size)
 {
 	__shared__ int smem[BLOCK_SIZE];
@@ -89,7 +90,8 @@ __global__ void histogram_smem_atomics(const float *input, int *out, int size)
 	smem[tid] = 0;
 	__syncthreads();
 
-	//	uint8_t pixel;
+//	uint8_t pixel;
+#pragma unroll
 	while (i < size)
 	{
 
@@ -103,12 +105,14 @@ __global__ void histogram_smem_atomics(const float *input, int *out, int size)
 	out[blockIdx.x * BLOCK_SIZE + tid] = smem[tid];
 }
 
+//collect all different histograms of 1 image into 1 final histogram.
 __global__ void histogram_final_accum(int n, int *out)
 {
 	int tid = threadIdx.x;
 	int i = tid;
 	int total = 0;
 
+#pragma unroll
 	while (i < n)
 	{
 		total += out[i];
@@ -121,24 +125,23 @@ __global__ void histogram_final_accum(int n, int *out)
 
 __global__ void find_Median(int n, int *hist, int *median)
 {
-	int half_way = n / 2;
+	//int tid = threadIdx.x;
 	int sum = 0;
 
-	for (int k = 0; k < COLOR; k++)
+//k=0 resets, not needed
+#pragma unroll
+	for (int k = 1; k < COLOR; k++)
 	{
-		sum += hist[k];
-		if (sum > half_way)
-		{
-			*median = k;
-			return;
-		}
+		sum += hist[k] * k;
 	}
+
+	*median = sum / n;
 }
 
+//can be extended to use 17th or 83rd percentiles.
 __global__ void find_Mtb_Ebm(const float *input, int *median, uint8_t *_mtb,
 							 uint8_t *_ebm, int _height, int _width)
 {
-
 	unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
 	unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
 	unsigned int idx = y * _width + x;
@@ -164,17 +167,17 @@ __global__ void find_Mtb_Ebm(const float *input, int *median, uint8_t *_mtb,
 	}
 }
 
-__global__ void AND(uint8_t *output, uint8_t *left, uint8_t *right, int width,
+//ANDs xor result with 2 EBs
+__global__ void AND(uint8_t *output, uint8_t *left1, uint8_t *left2, uint8_t *right, int width,
 					int size)
 {
-
 	unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
 	unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 	int index = y * width + x;
 	if (index < size)
 	{
-		output[index] = left[index] & right[index];
+		output[index] = left2[index] & (left1[index] & right[index]);
 	}
 }
 
@@ -202,6 +205,7 @@ __global__ void count_Errors(const uint8_t *input, int *out, int size)
 
 	count = 0;
 
+#pragma unroll
 	while (i < size)
 	{
 
@@ -219,7 +223,8 @@ __global__ void count_Errors(const uint8_t *input, int *out, int size)
 	}
 }
 
-__global__ void shift_Image(uint8_t *output, uint8_t *input, int width,
+//shifts MTBs and EBs.
+__global__ void shift_Image(uint8_t *output1, uint8_t *output2, uint8_t *input1, uint8_t *input2, int width,
 							int height, int x_shift, int y_shift, int j_x, int i_y, int j_width,
 							int i_height)
 {
@@ -233,7 +238,8 @@ __global__ void shift_Image(uint8_t *output, uint8_t *input, int width,
 
 	if (i < i_height && j < j_width)
 	{
-		output[output_index] = input[input_index];
+		output1[output_index] = input1[input_index];
+		output2[output_index] = input2[input_index];
 	}
 }
 
