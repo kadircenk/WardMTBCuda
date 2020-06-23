@@ -125,17 +125,19 @@ __global__ void histogram_final_accum(int n, int *out)
 
 __global__ void find_Median(int n, int *hist, int *median)
 {
-	//int tid = threadIdx.x;
+	int half_way = n / 2;
 	int sum = 0;
 
-//k=0 resets, not needed
 #pragma unroll
-	for (int k = 1; k < COLOR; k++)
+	for (int k = 0; k < COLOR; k++)
 	{
-		sum += hist[k] * k;
+		sum += hist[k];
+		if (sum > half_way)
+		{
+			*median = k;
+			return;
+		}
 	}
-
-	*median = sum / n;
 }
 
 //can be extended to use 17th or 83rd percentiles.
