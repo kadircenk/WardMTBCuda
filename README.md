@@ -1,6 +1,6 @@
 CUDA code of our paper:
 
-*Accelerating Translational Image Registration for Compositing High Dynamic Range Images from Handheld Camera Exposures Using CUDA*
+*Accelerating Translational Image Registration for HDR Images on GPU*
 
 ## Commands
 
