@@ -17,7 +17,7 @@ To run:
 ```
 ./a.out input/1.JPG input/2.JPG input/3.JPG input/4.JPG input/5.JPG
 ```
-## Credit
+## Credits
 
 STB Image Library (used to read/write images from/to the disk):
 
