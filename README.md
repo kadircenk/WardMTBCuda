@@ -2,6 +2,8 @@ CUDA code of our paper:
 
 *Accelerating Translational Image Registration for HDR Images on GPU*
 
+https://arxiv.org/abs/2007.06483
+
 ## Commands
 
 _Note: Requires CUDA to be installed on the machine._
