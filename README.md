@@ -7,6 +7,9 @@ This repository contains companion code for the following preprint:
 https://arxiv.org/abs/2007.06483
 
 
+<img src="https://kadircenk.github.io/img/blurryartifact.png" width="500" height="490">
+
+
 ## Commands
 
 _Note: Requires CUDA to be installed on the machine._
