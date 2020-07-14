@@ -7,14 +7,16 @@ This repository contains companion code for the following preprint:
 https://arxiv.org/abs/2007.06483
 
 
+
+
 If you use this code please cite the paper using the bibtex reference below:
 
 
 @article{2020arXiv200706483C,
 
-author = {{Cenk Alpay}, Kadir and {Berkay Aydemir}, Kadir and {Temizel}, Alptekin},
-
 title = "{Accelerating Translational Image Registration for HDR Images on GPU}",
+
+author = {{Cenk Alpay}, Kadir and {Berkay Aydemir}, Kadir and {Temizel}, Alptekin},
 
 journal = {arXiv e-prints},
 
