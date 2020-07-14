@@ -26,10 +26,14 @@ To run:
 
 ## Citation
 
-If you use this code please cite the paper using the bibtex reference below:
+If you use this code, please cite the paper using the reference below:
+
+> K.C. Alpay, K.B. Aydemir, A. Temizel, “Accelerating Translational Image Registration for HDR Images on GPU”, arXiv:2007.046483, July 2020.
+
+BibTeX entry:
 
 ```
-@article{wardmtb,
+@article{wardmtbcuda,
 title = {Accelerating Translational Image Registration for HDR Images on GPU},
 author = {Kadir Cenk Alpay and Kadir Berkay Aydemir and Alptekin Temizel},
 journal = {arXiv e-prints},
