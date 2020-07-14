@@ -7,24 +7,6 @@ This repository contains companion code for the following preprint:
 https://arxiv.org/abs/2007.06483
 
 
-
-
-If you use this code please cite the paper using the bibtex reference below:
-
-
-@article{2020arXiv200706483C,
-
-title = "{Accelerating Translational Image Registration for HDR Images on GPU}",
-
-author = {{Cenk Alpay}, Kadir and {Berkay Aydemir}, Kadir and {Temizel}, Alptekin},
-
-journal = {arXiv e-prints},
-
-year = 2020
-
-}
-
-
 ## Commands
 
 _Note: Requires CUDA to be installed on the machine._
@@ -40,6 +22,23 @@ To run:
 ```
 ./a.out input/1.JPG input/2.JPG input/3.JPG input/4.JPG input/5.JPG
 ```
+
+
+## Citation
+
+If you use this code please cite the paper using the bibtex reference below:
+
+```
+@article{2020arXiv200706483C,
+title = "{Accelerating Translational Image Registration for HDR Images on GPU}",
+author = {{Cenk Alpay}, Kadir and {Berkay Aydemir}, Kadir and {Temizel}, Alptekin},
+journal = {arXiv e-prints},
+year = 2020
+}
+```
+
+
+
 ## Credits
 
 STB Image Library (used to read/write images from/to the disk):
