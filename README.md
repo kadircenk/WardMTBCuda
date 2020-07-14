@@ -36,7 +36,7 @@ BibTeX entry:
 @article{wardmtbcuda,
 title = {Accelerating Translational Image Registration for HDR Images on GPU},
 author = {Kadir Cenk Alpay and Kadir Berkay Aydemir and Alptekin Temizel},
-journal = {arXiv e-prints},
+journal = {arXiv e-prints arXiv:2007.06483},
 year = {2020},
 }
 ```
