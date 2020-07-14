@@ -29,11 +29,11 @@ To run:
 If you use this code please cite the paper using the bibtex reference below:
 
 ```
-@article{2020arXiv200706483C,
-title = "{Accelerating Translational Image Registration for HDR Images on GPU}",
-author = {{Cenk Alpay}, Kadir and {Berkay Aydemir}, Kadir and {Temizel}, Alptekin},
+@article{wardmtb,
+title = {Accelerating Translational Image Registration for HDR Images on GPU},
+author = {Kadir Cenk Alpay and Kadir Berkay Aydemir and Alptekin Temizel},
 journal = {arXiv e-prints},
-year = 2020
+year = {2020},
 }
 ```
 
