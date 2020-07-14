@@ -1,6 +1,6 @@
-CUDA code of our paper:
+This repository contains companion code for the following preprint:
 
-*Accelerating Translational Image Registration for HDR Images on GPU*
+K.C. Alpay, K.B. Aydemir, A. Temizel, “Accelerating Translational Image Registration for HDR Images on GPU”, arXiv:2007.046483, July 2020.
 
 https://arxiv.org/abs/2007.06483
 
