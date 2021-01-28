@@ -1,7 +1,7 @@
 This repository contains companion code for the following preprint:
 
 
-*K.C. Alpay, K.B. Aydemir, A. Temizel, “Accelerating Translational Image Registration for HDR Images on GPU”, arXiv:2007.06483, July 2020.*
+*Alpay, K. C., Aydemir, K. B., & Temizel, A. (2020). Accelerating Translational Image Registration for HDR Images on GPU. arXiv preprint arXiv:2007.06483.*
 
 
 https://arxiv.org/abs/2007.06483
